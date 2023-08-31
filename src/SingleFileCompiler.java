@@ -23,7 +23,7 @@ public class SingleFileCompiler {
         return file;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         if (args.length == 0) {
             throw new IllegalArgumentException("Please provide a relative path to the file to be compiled as an argument.");
         }
@@ -36,11 +36,22 @@ public class SingleFileCompiler {
         List<Token> tokens = TokenFactory.tokenize(contents);
         String asm = TokenFactory.tokensToAsm(tokens);
 
-        FileWriter fileWriter = new FileWriter(file.getName().replace(".lol", ".asm"));
+        String fileName = file.getName().split("\\.")[0];
+        FileWriter fileWriter = new FileWriter(fileName + ".asm");
         fileWriter.write(asm);
         fileWriter.close();
+        System.out.printf("Successfully created assembly file \'%s\'!\n", fileName + ".asm");
 
-        System.out.println("Compilation successful - generated assembly file!");
+        String[] argsCmd1 = new String[] {"nasm", "-felf64", fileName + ".asm"};
+        String[] argsCmd2 = new String[] {"ld", fileName + ".o", "-o", fileName};
+        Process proc1 = new ProcessBuilder(argsCmd1).start();
+        proc1.waitFor();
+        proc1.destroy();
+        System.out.printf("Successfully created binary file \'%s\'!\n", fileName + ".o");
+        Process proc2 = new ProcessBuilder(argsCmd2).start();
+        proc2.waitFor();
+        proc2.destroy();
+        System.out.printf("Successfully created executable file \'%s\'!\n", fileName);
     }
 
 }
