@@ -1,5 +1,7 @@
+package token;
+
 public enum TokenType {
-    RETURN,
+    EXIT,
     INTEGER_LITERAL,
     SEMICOLON
 }
