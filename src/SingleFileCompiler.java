@@ -1,3 +1,10 @@
+import static analysis.Parser.NodeExit;
+
+import analysis.Parser;
+import analysis.Tokenizer;
+import generation.Generator;
+import token.Token;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -33,25 +40,29 @@ public class SingleFileCompiler {
 
         File file = getFileFromPathname(args[0]);
         String contents = Files.readString(Path.of(file.getPath()));
-        List<Token> tokens = TokenFactory.tokenize(contents);
-        String asm = TokenFactory.tokensToAsm(tokens);
+        Tokenizer tokenizer = new Tokenizer(contents);
+        List<Token> tokens = tokenizer.tokenize();
+        Parser parser = new Parser(tokens);
+        Optional<NodeExit> nodeExit = parser.parse();
+        Generator generator = new Generator(nodeExit.orElseThrow());
+        String asm = generator.generate();
 
         String fileName = file.getName().split("\\.")[0];
         FileWriter fileWriter = new FileWriter(fileName + ".asm");
         fileWriter.write(asm);
         fileWriter.close();
-        System.out.printf("Successfully created assembly file \'%s\'!\n", fileName + ".asm");
+        System.out.printf("Successfully created assembly file '%s'!\n", fileName + ".asm");
 
         String[] argsCmd1 = new String[] {"nasm", "-felf64", fileName + ".asm"};
         String[] argsCmd2 = new String[] {"ld", fileName + ".o", "-o", fileName};
         Process proc1 = new ProcessBuilder(argsCmd1).start();
         proc1.waitFor();
         proc1.destroy();
-        System.out.printf("Successfully created binary file \'%s\'!\n", fileName + ".o");
-        Process proc2 = new ProcessBuilder(argsCmd2).start();
+        System.out.printf("Successfully created binary file '%s'!\n", fileName + ".o");
+        /*Process proc2 = new ProcessBuilder(argsCmd2).start();
         proc2.waitFor();
         proc2.destroy();
-        System.out.printf("Successfully created executable file \'%s\'!\n", fileName);
+        System.out.printf("Successfully created executable file '%s'!\n", fileName);*/
     }
 
 }
